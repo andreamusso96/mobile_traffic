@@ -1,7 +1,9 @@
 from ..enums import City
+import os
 
-data_folder = '/Users/anmusso/Desktop/PhD/NetMob/NetMobData/data/GeoData/TileGeo/'
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+data_dir = f'{base_dir}/data/TileGeo'
 
 
 def get_data_file_path(city: City) -> str:
-    return f'{data_folder}/{city.value}.geojson'
+    return f'{data_dir}/{city.value}.geojson'

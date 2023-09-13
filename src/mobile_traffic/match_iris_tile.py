@@ -3,10 +3,11 @@ import geopandas as gpd
 from tqdm import tqdm
 import numpy as np
 
-import geo_iris as gi
-from src.mobile_traffic import geo_tile as gt, config
+import iris_france.geo as gi
 
+from . import geo_tile as gt
 from .enums import City, GeoDataType
+from . import config
 
 
 class GeoMatching:
