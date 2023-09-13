@@ -5,9 +5,9 @@ import numpy as np
 
 import iris_france.geo as gi
 
-from . import geo_tile as gt
-from .enums import City, GeoDataType
-from . import config
+from ..import geo_tile as gt
+from ..enums import City, GeoDataType
+from .. import config
 
 
 class GeoMatching:

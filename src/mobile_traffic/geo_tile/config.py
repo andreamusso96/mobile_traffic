@@ -7,3 +7,7 @@ data_dir = f'{base_dir}/data/TileGeo'
 
 def get_data_file_path(city: City) -> str:
     return f'{data_dir}/{city.value}.geojson'
+
+
+def get_matching_iris_tile_file_path():
+    return f'{data_dir}/MatchingIrisTile.csv'

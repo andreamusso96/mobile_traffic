@@ -8,7 +8,7 @@ import pandas as pd
 from . enums import Service, TrafficType, City, TimeOptions, GeoDataType
 from . import preprocessing
 from . import config
-from .match_iris_tile import geo_matching
+from .geo_tile import geo_matching
 
 
 def aggregate_and_save_traffic_data():

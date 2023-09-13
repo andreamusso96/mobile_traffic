@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 
 from .enums import City, Service, TrafficType, GeoDataType, TrafficDataDimensions, TimeOptions
-from . match_iris_tile import geo_matching
+from .geo_tile import geo_matching
 from . import config
 
 
