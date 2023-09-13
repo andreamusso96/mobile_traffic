@@ -5,9 +5,9 @@ import numpy as np
 
 import iris_france.geo as gi
 
-from ..import geo_tile as gt
+from . import data
 from ..enums import City, GeoDataType
-from .. import config
+from . import config
 
 
 class GeoMatching:
@@ -42,7 +42,7 @@ def get_matching() -> pd.DataFrame:
     matching = []
     iris_geo_data_gpd = gi.get_geo_data().to_crs(epsg=2154).reset_index(names='iris')
     for city in tqdm(City):
-        tile_geo_data_city_gpd = gt.get_geo_data(city=city).to_crs(epsg=2154).reset_index(names='tile')
+        tile_geo_data_city_gpd = data.data[city].to_crs(epsg=2154).reset_index(names='tile')
         city_matching = get_matching_city(tile_geo_data_city=tile_geo_data_city_gpd, iris_geo_data=iris_geo_data_gpd, city_name=city.value)
         matching.append(city_matching)
 
