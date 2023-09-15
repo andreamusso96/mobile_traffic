@@ -42,7 +42,7 @@ class CityTrafficData:
         traffic_data_aggregated_services = traffic_data_with_selected_services.sum(dim=TrafficDataDimensions.SERVICE.value)
         traffic_time_series = CityTrafficData.day_time_to_datetime_index(xar=traffic_data_aggregated_services)
         traffic_time_series = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_time_series, city=self.city, remove_nights_before_holidays=remove_nights_before_holidays, remove_nights_of_anomaly_periods=remove_nights_of_anomaly_periods)
-        traffic_time_series_by_location = traffic_data.T.to_pandas()
+        traffic_time_series_by_location = traffic_time_series.T.to_pandas()
         return traffic_time_series_by_location
 
     @staticmethod
@@ -53,7 +53,7 @@ class CityTrafficData:
             days_before_holiday = [holiday - timedelta(days=1) for holiday in days_holiday]
             days_to_remove = list(set(days_before_holiday).union(set(Calendar.fridays_and_saturdays())))
             traffic_data_ = CityTrafficData._remove_24h_periods(traffic_data=traffic_data_, dates=days_to_remove, time_start_period=time(15))
-            traffic_data_ = CityTrafficData._remove_24h_periods(traffic_data=traffic_data_, dates=[pd.Timestamp(traffic_data_.day[0].values).to_pydatetime()], time_start_period=time(0))  # Since the first day is a saturday, we cut of its night. If we do not remove it, we have half a day detached from the rest of our series.
+            traffic_data_ = CityTrafficData._remove_24h_periods(traffic_data=traffic_data_, dates=[pd.Timestamp(traffic_data_.datetime[0].values).to_pydatetime().date()], time_start_period=time(0))  # Since the first day is a saturday, we cut of its night. If we do not remove it, we have half a day detached from the rest of our series.
         if remove_nights_of_anomaly_periods:
             days_anomaly = Anomalies.get_anomaly_dates_by_city(city=city)
             days_before_anomaly = [day - timedelta(days=1) for day in days_anomaly]
