@@ -31,10 +31,10 @@ class Anomalies:
             anomaly_dates = [date(2019, 4, 12), date(2019, 4, 14), date(2019, 5, 12), date(2019, 5, 22),
                              date(2019, 5, 23), date(2019, 5, 24), date(2019, 5, 25)]
         elif city == City.DIJON:
-            # date 2019-03-31 contains nan values
-            anomaly_dates = [date(2019, 3, 31), date(2019, 4, 9), date(2019, 5, 12)]
+            anomaly_dates = [date(2019, 4, 9), date(2019, 5, 12)]
         else:
-            anomaly_dates = [date(2019, 4, 14), date(2019, 5, 12)]
+            # date 2019-03-31 contains nan values
+            anomaly_dates = [date(2019, 3, 31), date(2019, 4, 14), date(2019, 5, 12)]
         return anomaly_dates
 
     @staticmethod
