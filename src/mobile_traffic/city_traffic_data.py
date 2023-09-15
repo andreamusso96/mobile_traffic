@@ -11,7 +11,6 @@ from .utils import Calendar, Anomalies
 
 class CityTrafficData:
     def __init__(self, data: xr.DataArray, city: City, traffic_type: TrafficType, aggregation_level: str):
-        super().__init__()
         self.data = data
         self.city = city
         self.aggregation_level = aggregation_level
