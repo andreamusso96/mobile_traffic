@@ -72,6 +72,6 @@ class CityTrafficData:
     @staticmethod
     def day_time_to_datetime_index(xar: xr.DataArray) -> xr.DataArray:
         new_index = np.add.outer(xar.indexes[TrafficDataDimensions.DAY.value], xar.indexes[TrafficDataDimensions.TIME.value]).flatten()
-        datetime_xar = xar.stack(datetime=(TrafficDataDimensions.DAY.value, TrafficDataDimensions.TIME.value))
+        datetime_xar = xar.stack(datetime=(TrafficDataDimensions.DAY.value, TrafficDataDimensions.TIME.value), create_index=False)
         datetime_xar = datetime_xar.reindex({TrafficDataDimensions.DATETIME.value: new_index})
         return datetime_xar
