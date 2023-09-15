@@ -17,7 +17,8 @@ class CityTrafficData:
         self.traffic_type = traffic_type
 
     def get_service_consumption_by_location(self, start: time, end: time, remove_holidays: bool = True, remove_anomaly_periods: bool = True) -> pd.DataFrame:
-        traffic_data = self._remove_periods_where_service_consumption_data_is_noisy(traffic_data=self.data, city=self.city, start=start, end=end, remove_holidays=remove_holidays, remove_anomaly_periods=remove_anomaly_periods)
+        traffic_data  = CityTrafficData.day_time_to_datetime_index(xar=self.data)
+        traffic_data = self._remove_periods_where_service_consumption_data_is_noisy(traffic_data=traffic_data, city=self.city, start=start, end=end, remove_holidays=remove_holidays, remove_anomaly_periods=remove_anomaly_periods)
         service_consumption_by_location__total_hours = traffic_data.sum(dim=TrafficDataDimensions.DATETIME.value).to_pandas() / 4
         return service_consumption_by_location__total_hours
 
@@ -38,7 +39,9 @@ class CityTrafficData:
 
     def get_traffic_time_series_by_location(self, remove_nights_before_holidays: bool = True, remove_nights_of_anomaly_periods: bool = True, services: List[Service] = None) -> pd.DataFrame:
         traffic_data_with_selected_services = self.data if services is None else self.data.sel(service=[s.value for s in services])
-        traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data_with_selected_services.sum(dim=TrafficDataDimensions.SERVICE.value), city=self.city, remove_nights_before_holidays=remove_nights_before_holidays, remove_nights_of_anomaly_periods=remove_nights_of_anomaly_periods)
+        traffic_data_aggregated_services = traffic_data_with_selected_services.sum(dim=TrafficDataDimensions.SERVICE.value)
+        traffic_time_series = CityTrafficData.day_time_to_datetime_index(xar=traffic_data_aggregated_services)
+        traffic_time_series = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_time_series, city=self.city, remove_nights_before_holidays=remove_nights_before_holidays, remove_nights_of_anomaly_periods=remove_nights_of_anomaly_periods)
         traffic_time_series_by_location = traffic_data.T.to_pandas()
         return traffic_time_series_by_location
 
@@ -65,3 +68,10 @@ class CityTrafficData:
         datetime_to_remove = np.concatenate([np.where((datetime_ >= start) & (datetime_ < end))[0] for start, end in datetime_intervals_to_remove])
         datetime_to_keep = np.setdiff1d(np.arange(len(datetime_)), datetime_to_remove)
         return traffic_data.isel(datetime=datetime_to_keep)
+
+    @staticmethod
+    def day_time_to_datetime_index(xar: xr.DataArray) -> xr.DataArray:
+        new_index = np.add.outer(xar.indexes[TrafficDataDimensions.DAY.value], xar.indexes[TrafficDataDimensions.TIME.value]).flatten()
+        datetime_xar = xar.stack(datetime=(TrafficDataDimensions.DAY.value, TrafficDataDimensions.TIME.value))
+        datetime_xar = datetime_xar.reindex({TrafficDataDimensions.DATETIME.value: new_index})
+        return datetime_xar

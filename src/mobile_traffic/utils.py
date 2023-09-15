@@ -39,10 +39,3 @@ class Anomalies:
         anomaly_dates = [date(2019, 4, 9), date(2019, 4, 12), date(2019, 4, 14), date(2019, 5, 12),
                          date(2019, 5, 22), date(2019, 5, 23), date(2019, 5, 24), date(2019, 5, 25)]
         return anomaly_dates
-
-
-def day_time_to_datetime_index(xar: xr.DataArray) -> xr.DataArray:
-    new_index = np.add.outer(xar.indexes[TrafficDataDimensions.DAY.value], xar.indexes[TrafficDataDimensions.TIME.value]).flatten()
-    datetime_xar = xar.stack(datetime=[TrafficDataDimensions.DAY.value, TrafficDataDimensions.TIME.value], create_index=False)
-    datetime_xar = datetime_xar.reindex({TrafficDataDimensions.DATETIME.value: new_index})
-    return datetime_xar

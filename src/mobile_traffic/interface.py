@@ -10,7 +10,6 @@ from .utils import day_time_to_datetime_index
 
 def get_city_traffic_data(traffic_type: TrafficType, city: City, geo_data_type: GeoDataType = GeoDataType.IRIS) -> CityTrafficData:
     data = get_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city)
-    # data = day_time_to_datetime_index(xar=data)
     return CityTrafficData(data=data, city=city, traffic_type=traffic_type, aggregation_level=geo_data_type.value)
 
 
