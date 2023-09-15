@@ -97,4 +97,8 @@ def load_traffic_data_file(traffic_type: TrafficType, geo_data_type: GeoDataType
     cols = [geo_data_type.value] + list(TimeOptions.get_times())
     traffic_data = pd.read_csv(file_path, sep=' ', names=cols)
     traffic_data.set_index(geo_data_type.value, inplace=True)
+    if traffic_data.isna().sum().sum() > 0:
+        print(f'WARNING: file of traffic_type={traffic_type.value}, geo_data_type={geo_data_type.value}, city={city.value}, service={service.value}, day={day} contains NaN values. Replacing them with 0.')
+        traffic_data.fillna(0, inplace=True)
+
     return traffic_data
