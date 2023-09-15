@@ -5,7 +5,6 @@ import xarray as xr
 from . import preprocessing
 from .enums import City, Service, TrafficType, GeoDataType
 from .city_traffic_data import CityTrafficData
-from .utils import day_time_to_datetime_index
 
 
 def get_city_traffic_data(traffic_type: TrafficType, city: City, geo_data_type: GeoDataType = GeoDataType.IRIS) -> CityTrafficData:
