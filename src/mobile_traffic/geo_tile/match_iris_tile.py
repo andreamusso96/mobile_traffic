@@ -3,7 +3,7 @@ import geopandas as gpd
 from tqdm import tqdm
 import numpy as np
 
-import iris_france.geo as gi
+import insee.iris.geo as gi
 
 from . import data
 from ..enums import City, GeoDataType
