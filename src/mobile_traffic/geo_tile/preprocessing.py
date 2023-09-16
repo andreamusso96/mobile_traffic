@@ -14,7 +14,8 @@ def load_tile_geo_data():
 
 def load_tile_geo_data_city(city: City):
     file_path = config.get_data_file_path(city=city)
-    data = gpd.read_file(filename=file_path, dtypes={'tile_id': int})
+    data = gpd.read_file(filename=file_path, engine="pyogrio")
+    data['tile_id'] = data['tile_id'].astype(int)
     data.rename(columns={'tile_id': 'tile'}, inplace=True)
     data.set_index(keys='tile', inplace=True)
     return data
