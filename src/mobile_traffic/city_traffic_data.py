@@ -19,17 +19,26 @@ class CityTrafficData:
     def print(self):
         print('I am a printer')
 
+    def get_datetimes_to_keep(self, start: time, end: time, traffic_data: xr.DataArray) -> List[date]:
+        datetime_ = pd.DatetimeIndex(traffic_data.datetime.values).to_pydatetime()
+        dates = np.unique(datetime_.date)
+        datetime_intervals_to_keep = [(datetime.combine(day, start), datetime.combine(day, end)) for day in dates]
+        datetime_to_keep = np.concatenate([np.where((datetime_ >= start) & (datetime_ < end))[0] for start, end in datetime_intervals_to_keep])
+        return datetime_to_keep
+
     def get_service_consumption_by_location(self, start: time, end: time, remove_holidays: bool = True, remove_anomaly_periods: bool = True) -> pd.DataFrame:
-        traffic_data  = CityTrafficData.day_time_to_datetime_index(xar=self.data)
-        print('tranformed to datetime index')
-        traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, start=start, end=end, remove_holidays=remove_holidays, remove_anomaly_periods=remove_anomaly_periods)
+        print('transforming to datetime index')
+        traffic_data = CityTrafficData.day_time_to_datetime_index(xar=self.data)
+        print('removing undesired dates and times')
+        traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, remove_nights_before_holidays=remove_holidays, remove_nights_of_anomaly_periods=remove_anomaly_periods)
+        traffic_data = traffic_data.isel(datetime=self.get_datetimes_to_keep(start=start, end=end, traffic_data=traffic_data))
         print('removed nights')
         service_consumption_by_location__total_hours = traffic_data.sum(dim=TrafficDataDimensions.DATETIME.value).to_pandas() / 4
         print('summed')
         return service_consumption_by_location__total_hours
 
     @staticmethod
-    def _remove_periods_where_service_consumption_data_is_noisy(traffic_data: xr.DataArray, city: City, start: time, end: time, remove_holidays: bool, remove_anomaly_periods: bool=True):
+    def _remove_periods_where_service_consumption_data_is_noisy(traffic_data: xr.DataArray, city: City, remove_holidays: bool, remove_anomaly_periods: bool=True):
         traffic_data_ = traffic_data
         if remove_holidays:
             days_holiday = Calendar.holidays()
