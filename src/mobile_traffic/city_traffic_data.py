@@ -33,8 +33,6 @@ class CityTrafficData:
             anomaly_periods = Anomalies.get_anomaly_dates_by_city(city=city)
             traffic_data_ = CityTrafficData._remove_24h_periods(traffic_data=traffic_data_, dates=anomaly_periods, time_start_period=time(0))
 
-        days = np.unique(traffic_data_.datetime.dt.date.values)
-        traffic_data_ = xr.concat([traffic_data_.sel(datetime=slice(datetime.combine(day, start), datetime.combine(day, end))) for day in days], dim='datetime')
         return traffic_data_
 
     def get_traffic_time_series_by_location(self, remove_nights_before_holidays: bool = True, remove_nights_of_anomaly_periods: bool = True, services: List[Service] = None) -> pd.DataFrame:
