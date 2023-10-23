@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 from tqdm import tqdm
 
-from .enums import City, Service, TrafficType, GeoDataType, TrafficDataDimensions, TimeOptions
+from .enums import City, Service, TrafficType, GeoDataType, TrafficDataDimensions, TimeOptions, ServiceType
 from .geo_tile import geo_matching
 from . import config
 
@@ -15,13 +15,13 @@ def city_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, cit
     data_vals = []
     days = TimeOptions.get_days()
     for day in tqdm(days):
-        data_vals_day = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for service in Service.get_services(traffic_type=traffic_type))
+        data_vals_day = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for service in Service.get_services(service_type=ServiceType.ENTERTAINMENT))
         data_vals.append(np.stack(data_vals_day, axis=-1))
 
     data = np.stack(data_vals, axis=-1)
     coords = {geo_data_type.value: geo_matching.get_location_list(geo_data_type=geo_data_type, city=city),
               TrafficDataDimensions.TIME.value: TimeOptions.get_times(),
-              TrafficDataDimensions.SERVICE.value: Service.get_services(traffic_type=traffic_type, return_values=True),
+              TrafficDataDimensions.SERVICE.value: Service.get_services(service_type=ServiceType.ENTERTAINMENT, return_values=True),
               TrafficDataDimensions.DAY.value: TimeOptions.get_days()}
     dims = [geo_data_type.value, TrafficDataDimensions.TIME.value, TrafficDataDimensions.SERVICE.value, TrafficDataDimensions.DAY.value]
     xar = xr.DataArray(data, coords=coords, dims=dims)
@@ -58,11 +58,11 @@ def city_service_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataT
 
 
 def city_day_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City, day: date) -> xr.DataArray:
-    data_vals = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for service in Service.get_services(traffic_type=traffic_type))
+    data_vals = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for service in Service.get_services(service_type=ServiceType.ENTERTAINMENT))
     data = np.stack(data_vals, axis=-1)
     coords = {geo_data_type.value: geo_matching.get_location_list(geo_data_type=geo_data_type, city=city),
               TrafficDataDimensions.TIME.value: TimeOptions.get_times(),
-              TrafficDataDimensions.SERVICE.value: Service.get_services(traffic_type=traffic_type)}
+              TrafficDataDimensions.SERVICE.value: Service.get_services(service_type=ServiceType.ENTERTAINMENT, return_values=True)}
     dims = [geo_data_type.value, TrafficDataDimensions.TIME.value, TrafficDataDimensions.SERVICE.value]
     xar = xr.DataArray(data, coords=coords, dims=dims)
     return xar
