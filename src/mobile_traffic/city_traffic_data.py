@@ -22,7 +22,7 @@ class CityTrafficData:
     def get_datetimes_to_keep(self, start: time, end: time, traffic_data: xr.DataArray) -> List[date]:
         datetime_ = pd.DatetimeIndex(traffic_data.datetime.values).to_pydatetime()
         dates = np.unique([d.date() for d in datetime_])
-        datetime_intervals_to_keep = [(datetime.combine(day, start), datetime.combine(day, end)) for day in dates]
+        datetime_intervals_to_keep = [(datetime.combine(day, start), datetime.combine(day, end) + timedelta(days=1)) for day in dates]
         datetime_to_keep = np.concatenate([np.where((datetime_ >= start) & (datetime_ < end))[0] for start, end in datetime_intervals_to_keep])
         return datetime_to_keep
 
