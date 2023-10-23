@@ -29,12 +29,12 @@ class CityTrafficData:
     def get_service_consumption_by_location(self, start: time, end: time, remove_holidays: bool = True, remove_anomaly_periods: bool = True) -> pd.DataFrame:
         print('transforming to datetime index')
         traffic_data = CityTrafficData.day_time_to_datetime_index(xar=self.data)
-        print('removing undesired dates and times')
+        print('removing undesired days')
         traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, remove_nights_before_holidays=remove_holidays, remove_nights_of_anomaly_periods=remove_anomaly_periods)
+        print('removing undesired times')
         traffic_data = traffic_data.isel(datetime=self.get_datetimes_to_keep(start=start, end=end, traffic_data=traffic_data))
-        print('removed nights')
+        print('summing')
         service_consumption_by_location__total_hours = traffic_data.sum(dim=TrafficDataDimensions.DATETIME.value).to_pandas() / 4
-        print('summed')
         return service_consumption_by_location__total_hours
 
     @staticmethod
@@ -62,12 +62,14 @@ class CityTrafficData:
     def _remove_nights_where_traffic_data_is_noisy(traffic_data: xr.DataArray, city: City, remove_nights_before_holidays: bool, remove_nights_of_anomaly_periods: bool) -> xr.DataArray:
         traffic_data_ = traffic_data
         if remove_nights_before_holidays:
+            print('removing nights before holidays')
             days_holiday = Calendar.holidays()
             days_before_holiday = [holiday - timedelta(days=1) for holiday in days_holiday]
             days_to_remove = list(set(days_before_holiday).union(set(Calendar.fridays_and_saturdays())))
             traffic_data_ = CityTrafficData._remove_24h_periods(traffic_data=traffic_data_, dates=days_to_remove, time_start_period=time(15))
             traffic_data_ = CityTrafficData._remove_24h_periods(traffic_data=traffic_data_, dates=[pd.Timestamp(traffic_data_.datetime[0].values).to_pydatetime().date()], time_start_period=time(0))  # Since the first day is a saturday, we cut of its night. If we do not remove it, we have half a day detached from the rest of our series.
         if remove_nights_of_anomaly_periods:
+            print('removing nights of anomaly periods')
             days_anomaly = Anomalies.get_anomaly_dates_by_city(city=city)
             days_before_anomaly = [day - timedelta(days=1) for day in days_anomaly]
             days_to_remove = list(set(days_anomaly).union(set(days_before_anomaly)))
