@@ -16,10 +16,16 @@ class CityTrafficData:
         self.aggregation_level = aggregation_level
         self.traffic_type = traffic_type
 
+    def print(self):
+        print('I am a printer')
+
     def get_service_consumption_by_location(self, start: time, end: time, remove_holidays: bool = True, remove_anomaly_periods: bool = True) -> pd.DataFrame:
         traffic_data  = CityTrafficData.day_time_to_datetime_index(xar=self.data)
-        traffic_data = self._remove_periods_where_service_consumption_data_is_noisy(traffic_data=traffic_data, city=self.city, start=start, end=end, remove_holidays=remove_holidays, remove_anomaly_periods=remove_anomaly_periods)
+        print('tranformed to datetime index')
+        traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, start=start, end=end, remove_holidays=remove_holidays, remove_anomaly_periods=remove_anomaly_periods)
+        print('removed nights')
         service_consumption_by_location__total_hours = traffic_data.sum(dim=TrafficDataDimensions.DATETIME.value).to_pandas() / 4
+        print('summed')
         return service_consumption_by_location__total_hours
 
     @staticmethod
