@@ -1,5 +1,7 @@
 from datetime import date
 from joblib import Parallel, delayed
+from typing import List
+import itertools
 
 import pandas as pd
 import xarray as xr
@@ -11,69 +13,18 @@ from .geo_tile import geo_matching
 from . import config
 
 
-def city_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City) -> xr.DataArray:
-    data_vals = []
-    days = TimeOptions.get_days()
-    for day in tqdm(days):
-        data_vals_day = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for service in Service.get_services(service_type=ServiceType.ENTERTAINMENT))
-        data_vals.append(np.stack(data_vals_day, axis=-1))
-
-    data = np.stack(data_vals, axis=-1)
+def load_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City, service: List[Service], day: List[date]) -> xr.DataArray:
+    tuples = list(itertools.product(service, day))
+    map_tuple_index = {t: i for i, t in enumerate(tuples)}
+    data_vals = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=s, day=d) for s, d in tqdm(tuples))
+    # data_vals = [load_traffic_data_base(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=s, day=d) for s, d in tqdm(tuples)]
+    data_vals = np.stack([np.stack([data_vals[map_tuple_index[(s, d)]] for i, s in enumerate(service)], axis=-1) for j, d in enumerate(day)], axis=-1)
     coords = {geo_data_type.value: geo_matching.get_location_list(geo_data_type=geo_data_type, city=city),
               TrafficDataDimensions.TIME.value: TimeOptions.get_times(),
-              TrafficDataDimensions.SERVICE.value: Service.get_services(service_type=ServiceType.ENTERTAINMENT, return_values=True),
-              TrafficDataDimensions.DAY.value: TimeOptions.get_days()}
+              TrafficDataDimensions.SERVICE.value: [s.value for s in service],
+              TrafficDataDimensions.DAY.value: day}
     dims = [geo_data_type.value, TrafficDataDimensions.TIME.value, TrafficDataDimensions.SERVICE.value, TrafficDataDimensions.DAY.value]
-    xar = xr.DataArray(data, coords=coords, dims=dims)
-    return xar
-
-
-def service_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, service: Service) -> xr.DataArray:
-    data_vals = []
-    location_ids = []
-    for city in tqdm(City):
-        data_vals_day = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for day in TimeOptions.get_days())
-        data_vals.append(np.stack(data_vals_day, axis=-1))
-        location_ids += geo_matching.get_location_list(geo_data_type=geo_data_type, city=city)
-
-    data = np.concatenate(data_vals, axis=0)
-    coords = {geo_data_type.value: location_ids,
-              TrafficDataDimensions.TIME.value: TimeOptions.get_times(),
-              TrafficDataDimensions.DAY.value: TimeOptions.get_days()}
-    dims = [geo_data_type.value, TrafficDataDimensions.TIME.value, TrafficDataDimensions.DAY.value]
-    xar = xr.DataArray(data, coords=coords, dims=dims)
-    return xar
-
-
-def city_service_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City, service: Service) -> xr.DataArray:
-    days = TimeOptions.get_days()
-    data_vals = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for day in days)
-    data = np.stack(data_vals, axis=-1)
-    coords = {geo_data_type.value: geo_matching.get_location_list(geo_data_type=geo_data_type, city=city),
-              TrafficDataDimensions.TIME.value: TimeOptions.get_times(),
-              TrafficDataDimensions.DAY.value: TimeOptions.get_days()}
-    dims = [geo_data_type.value, TrafficDataDimensions.TIME.value, TrafficDataDimensions.DAY.value]
-    xar = xr.DataArray(data, coords=coords, dims=dims)
-    return xar
-
-
-def city_day_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City, day: date) -> xr.DataArray:
-    data_vals = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day) for service in Service.get_services(service_type=ServiceType.ENTERTAINMENT))
-    data = np.stack(data_vals, axis=-1)
-    coords = {geo_data_type.value: geo_matching.get_location_list(geo_data_type=geo_data_type, city=city),
-              TrafficDataDimensions.TIME.value: TimeOptions.get_times(),
-              TrafficDataDimensions.SERVICE.value: Service.get_services(service_type=ServiceType.ENTERTAINMENT, return_values=True)}
-    dims = [geo_data_type.value, TrafficDataDimensions.TIME.value, TrafficDataDimensions.SERVICE.value]
-    xar = xr.DataArray(data, coords=coords, dims=dims)
-    return xar
-
-
-def city_service_day_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City, service: Service, day: date) -> xr.DataArray:
-    data = load_traffic_data_base(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day)
-    coords = {geo_data_type.value: geo_matching.get_location_list(city=city, geo_data_type=geo_data_type),
-              TrafficDataDimensions.TIME.value: TimeOptions.get_times()}
-    dims = [geo_data_type.value, TrafficDataDimensions.TIME.value]
-    xar = xr.DataArray(data, coords=coords, dims=dims)
+    xar = xr.DataArray(data_vals, coords=coords, dims=dims)
     return xar
 
 
@@ -100,7 +51,7 @@ def load_traffic_data_file(traffic_type: TrafficType, geo_data_type: GeoDataType
 
     nans = traffic_data.isna().sum().sum()
     if nans > 0:
-        print(f'WARNING: file of traffic_type={traffic_type.value}, geo_data_type={geo_data_type.value}, city={city.value}, service={service.value}, day={day} contains NaN values n={nans}, share={nans/(traffic_data.shape[0] * traffic_data.shape[1])}. Replacing them with 0.')
+        print(f'WARNING: file of traffic_type={traffic_type.value}, geo_data_type={geo_data_type.value}, city={city.value}, service={service.value}, day={day} contains NaN values n={nans}, share={nans / (traffic_data.shape[0] * traffic_data.shape[1])}. Replacing them with 0.')
         traffic_data.fillna(0, inplace=True)
 
     return traffic_data

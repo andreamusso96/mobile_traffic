@@ -1,27 +1,15 @@
+from typing import List
 from datetime import date, datetime, time
 
 import xarray as xr
 
 from . import preprocessing
-from .enums import City, Service, TrafficType, GeoDataType
+from .enums import City, Service, TrafficType, GeoDataType, ServiceType, TimeOptions
 from .city_traffic_data import CityTrafficData
 
 
-def get_city_traffic_data(traffic_type: TrafficType, city: City, geo_data_type: GeoDataType = GeoDataType.IRIS) -> CityTrafficData:
-    data = get_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city)
-    return CityTrafficData(data=data, city=city, traffic_type=traffic_type, aggregation_level=geo_data_type.value)
-
-
-def get_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City = None, service: Service = None, day: date = None) -> xr.DataArray:
-    if service is None and day is None and city is not None:
-        return preprocessing.city_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city)
-    elif service is None and day is not None and city is not None:
-        return preprocessing.city_day_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, day=day)
-    elif service is not None and day is None and city is not None:
-        return preprocessing.city_service_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service)
-    elif service is not None and day is not None and city is not None:
-        return preprocessing.city_service_day_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day)
-    elif service is not None and day is None and city is None:
-        return preprocessing.service_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, service=service)
-    else:
-        raise ValueError(f'Invalid parameters for DataIO.load_traffic_data: traffic_type={traffic_type}, geo_data_type={geo_data_type}, city={city}, service={service}, day={day}')
+def get_traffic_data(traffic_type: TrafficType, geo_data_type: GeoDataType, city: City, service: List[Service] = None, day: List[date] = None) -> CityTrafficData:
+    service = Service.get_services(service_type=ServiceType.ENTERTAINMENT) if service is None else service
+    day = list(TimeOptions.get_days()) if day is None else day
+    data = preprocessing.load_traffic_data(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=service, day=day)
+    return CityTrafficData(data=data, city=city, traffic_type=traffic_type, service=service, day=day, aggregation_level=geo_data_type.value)
