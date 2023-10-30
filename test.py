@@ -10,3 +10,4 @@ if __name__ == '__main__':
     print(traffic.data.day)
     print(traffic.get_traffic_time_series_by_location())
     print(traffic.get_service_consumption_by_location(start=time(22), end=time(3)))
+    print(traffic.get_service_consumption_by_time_of_day(start=time(22), end=time(3)))

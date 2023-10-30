@@ -29,13 +29,24 @@ class CityTrafficData:
         service_consumption_by_location__total_hours = traffic_data.sum(dim=TrafficDataDimensions.DATETIME.value).to_pandas() / 4
         return service_consumption_by_location__total_hours
 
+    def get_service_consumption_by_time_of_day(self, start: time, end: time, remove_holidays: bool = True, remove_anomaly_periods: bool = True) -> pd.DataFrame:
+        traffic_data = CityTrafficData.day_time_to_datetime_index(xar=self.data)
+        traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, remove_nights_before_holidays=remove_holidays, remove_nights_of_anomaly_periods=remove_anomaly_periods)
+        traffic_data = self._remove_times_outside_range(traffic_data=traffic_data, start=start, end=end)
+        traffic_data = traffic_data.sum(dim=self.aggregation_level).to_pandas().T
+        traffic_data['time'] = traffic_data.index.time
+        traffic_data = traffic_data.groupby(by='time').mean()
+        return traffic_data
+
+
     @staticmethod
     def _remove_times_outside_range(traffic_data: xr.DataArray, start: time, end: time) -> xr.DataArray:
         auxiliary_date = date(2020, 1, 1)
         auxiliary_datetime_start, auxiliary_datetime_end = datetime.combine(auxiliary_date, start), datetime.combine(auxiliary_date, end)
-        length_period = auxiliary_datetime_end - auxiliary_datetime_start if auxiliary_datetime_end > auxiliary_datetime_start else (auxiliary_datetime_end + timedelta(days=1)) - auxiliary_datetime_start
+        length_period_keep = auxiliary_datetime_end - auxiliary_datetime_start if auxiliary_datetime_end > auxiliary_datetime_start else (auxiliary_datetime_end + timedelta(days=1)) - auxiliary_datetime_start
+        length_period_remove = timedelta(days=1) - length_period_keep
         dates = list(np.unique([d.date() for d in pd.DatetimeIndex(traffic_data.datetime.values).to_pydatetime()]))
-        return CityTrafficData._remove_period_on_dates(traffic_data=traffic_data, time_start_period=start, length_period=length_period, dates=dates)
+        return CityTrafficData._remove_period_on_dates(traffic_data=traffic_data, time_start_period=end, length_period=length_period_remove, dates=dates)
 
     def get_traffic_time_series_by_location(self, remove_nights_before_holidays: bool = True, remove_nights_of_anomaly_periods: bool = True, services: List[Service] = None) -> pd.DataFrame:
         traffic_data_with_selected_services = self.data if services is None else self.data.sel(service=[s.value for s in services])
@@ -79,3 +90,4 @@ class CityTrafficData:
         datetime_xar = xar.stack(datetime=(TrafficDataDimensions.DAY.value, TrafficDataDimensions.TIME.value), create_index=False)
         datetime_xar = datetime_xar.reindex({TrafficDataDimensions.DATETIME.value: new_index})
         return datetime_xar
+
