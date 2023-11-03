@@ -19,13 +19,9 @@ class CityTrafficData:
         self.day = day
 
     def get_service_consumption_by_location(self, start: time, end: time, remove_holidays: bool = True, remove_anomaly_periods: bool = True) -> pd.DataFrame:
-        print('transforming to datetime index')
         traffic_data = CityTrafficData.day_time_to_datetime_index(xar=self.data)
-        print('removing undesired days')
         traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, remove_nights_before_holidays=remove_holidays, remove_nights_of_anomaly_periods=remove_anomaly_periods)
-        print('removing undesired times')
         traffic_data = self._remove_times_outside_range(traffic_data=traffic_data, start=start, end=end)
-        print('summing')
         service_consumption_by_location__total_hours = traffic_data.sum(dim=TrafficDataDimensions.DATETIME.value).to_pandas() / 4
         return service_consumption_by_location__total_hours
 
@@ -33,11 +29,17 @@ class CityTrafficData:
         traffic_data = CityTrafficData.day_time_to_datetime_index(xar=self.data)
         traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, remove_nights_before_holidays=remove_holidays, remove_nights_of_anomaly_periods=remove_anomaly_periods)
         traffic_data = self._remove_times_outside_range(traffic_data=traffic_data, start=start, end=end)
-        traffic_data = traffic_data.sum(dim=self.aggregation_level).to_pandas().T
-        traffic_data['time'] = traffic_data.index.time
-        traffic_data = traffic_data.groupby(by='time').mean()
-        return traffic_data
+        service_consumption_by_time = traffic_data.sum(dim=self.aggregation_level).to_pandas().T
+        service_consumption_by_time['time'] = service_consumption_by_time.index.time
+        service_consumption_by_time = service_consumption_by_time.groupby(by='time').sum()
+        return service_consumption_by_time
 
+    def get_service_consumption_by_location_and_time_of_day(self, start: time, end: time, remove_holidays: bool = True, remove_anomaly_periods: bool = True):
+        traffic_data = CityTrafficData.day_time_to_datetime_index(xar=self.data)
+        traffic_data = self._remove_nights_where_traffic_data_is_noisy(traffic_data=traffic_data, city=self.city, remove_nights_before_holidays=remove_holidays, remove_nights_of_anomaly_periods=remove_anomaly_periods)
+        traffic_data = self._remove_times_outside_range(traffic_data=traffic_data, start=start, end=end)
+        traffic_data = traffic_data.groupby(group=f'{TrafficDataDimensions.DATETIME.value}.time').sum()
+        return traffic_data
 
     @staticmethod
     def _remove_times_outside_range(traffic_data: xr.DataArray, start: time, end: time) -> xr.DataArray:
