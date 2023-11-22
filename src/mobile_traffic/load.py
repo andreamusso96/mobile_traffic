@@ -16,7 +16,7 @@ from .utils import logger
 def load_traffic_data(traffic_type: TrafficType, city: City, service: List[Service], day: List[date]) -> xr.DataArray:
     tuples = list(itertools.product(service, day))
     map_tuple_index = {t: i for i, t in enumerate(tuples)}
-    data_vals = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, city=city, service=s, day=d) for s, d in tqdm(tuples))
+    data_vals = Parallel(n_jobs=-1)(delayed(load_traffic_data_base)(traffic_type=traffic_type, city=city, service=s, day=d) for s, d in tuples)
     # data_vals = [load_traffic_data_base(traffic_type=traffic_type, geo_data_type=geo_data_type, city=city, service=s, day=d) for s, d in tqdm(tuples)]
     data_vals = np.stack([np.stack([data_vals[map_tuple_index[(s, d)]] for i, s in enumerate(service)], axis=-1) for j, d in enumerate(day)], axis=-1)
     coords = {TrafficDataDimensions.TILE.value: get_location_list(city=city),

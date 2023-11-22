@@ -14,17 +14,10 @@ class Dataset:
     def __init__(self, data: Dict[City, xr.DataArray]):
         self.data = data
 
-    def __getitem__(self, city: City) -> xr.DataArray:
-        return self.data[city]
-
-    def cities(self) -> List[City]:
-        return list(self.data.keys())
-
-    def group_by(self, group: str, func: Callable) -> 'Dataset':
-        return Dataset(data={city: data.groupby(group=group).reduce(func=func) for city, data in self.data.items()})
-
     def save(self, folder_path: str):
         for city, data in self.data.items():
+            time_as_str = [str(t) for t in data.time.values]
+            data.assign_coords(time=time_as_str)
             data.to_netcdf(f'{folder_path}/{city.value}.nc')
 
     def load(self, folder_path: str, city: List[City] = None):
