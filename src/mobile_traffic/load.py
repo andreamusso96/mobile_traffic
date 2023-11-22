@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from .enums import City, Service, TrafficType, TrafficDataDimensions, TimeOptions
 from . import config
+from .utils import logger
 
 
 def load_traffic_data(traffic_type: TrafficType, city: City, service: List[Service], day: List[date]) -> xr.DataArray:
@@ -49,8 +50,9 @@ def load_traffic_data_file(traffic_type: TrafficType, city: City, service: Servi
     traffic_data.set_index(TrafficDataDimensions.TILE.value, inplace=True)
 
     nans = traffic_data.isna().sum().sum()
+
     if nans > 0:
-        print(f'WARNING: file of traffic_type={traffic_type.value}, city={city.value}, service={service.value}, day={day} contains NaN values n={nans}, share={nans / (traffic_data.shape[0] * traffic_data.shape[1])}. Replacing them with 0.')
+        logger.debug(f'WARNING: file of traffic_type={traffic_type.value}, city={city.value}, service={service.value}, day={day} contains NaN values n={nans}, share={nans / (traffic_data.shape[0] * traffic_data.shape[1])}. Replacing them with 0.')
         traffic_data.fillna(0, inplace=True)
 
     return traffic_data

@@ -1,9 +1,20 @@
 from datetime import date
 from typing import List
+import logging
 
 import pandas as pd
 
 from .enums import City
+
+# Logging
+level = logging.INFO
+logger = logging.getLogger('mobile_traffic')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler = logging.StreamHandler()
+logger.setLevel(level)
+console_handler.setLevel(level)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 class Calendar:
