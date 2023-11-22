@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 import xarray as xr
 from datetime import time
+from tqdm import tqdm
 
 from .enums import TrafficDataDimensions, TrafficType, City, Service, TimeOptions
 from .load import load_traffic_data
@@ -20,7 +21,7 @@ def get_night_traffic_by_tile_service_time_city(traffic_type: TrafficType, start
     city = city if city is not None else [c for c in City]
     service = service if service is not None else [s for s in Service]
 
-    traffic_data = [get_night_traffic_city_by_tile_service_time(city=c, traffic_type=traffic_type, start_night=start_night, end_night=end_night, service=service, remove_noisy_nights=remove_noisy_nights, expand_city_dimension=True) for c in city]
+    traffic_data = [get_night_traffic_city_by_tile_service_time(city=c, traffic_type=traffic_type, start_night=start_night, end_night=end_night, service=service, remove_noisy_nights=remove_noisy_nights, expand_city_dimension=True) for c in tqdm(city)]
     traffic_data = xr.concat(traffic_data, dim=TrafficDataDimensions.CITY.value)
     return traffic_data
 
