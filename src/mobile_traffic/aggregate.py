@@ -17,8 +17,8 @@ class Dataset:
     def save(self, folder_path: str):
         for city, data in self.data.items():
             time_as_str = [str(t) for t in data.time.values]
-            data.assign_coords(time=time_as_str)
-            data.to_netcdf(f'{folder_path}/{city.value}.nc')
+            data_ = data.assign_coords(time=time_as_str)
+            data_.to_netcdf(f'{folder_path}/{city.value}.nc')
 
     def load(self, folder_path: str, city: List[City] = None):
         city = city if city is not None else [c for c in City]
