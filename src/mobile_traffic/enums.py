@@ -41,12 +41,6 @@ class TrafficType(Enum):
     DL = 'DL'
     UL = 'UL'
     UL_AND_DL = 'UL_AND_DL'
-    USERS = 'Users'
-
-
-class GeoDataType(Enum):
-    TILE = 'tile'
-    IRIS = 'iris'
 
 
 class ServiceType(Enum):
@@ -234,3 +228,5 @@ class TrafficDataDimensions(Enum):
     TIME = 'time'
     DAY = 'day'
     DATETIME = 'datetime'
+    TILE = 'tile'
+    CITY = 'city'

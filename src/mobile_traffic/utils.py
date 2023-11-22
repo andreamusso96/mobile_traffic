@@ -2,10 +2,8 @@ from datetime import date
 from typing import List
 
 import pandas as pd
-import xarray as xr
-import numpy as np
 
-from .enums import City, TrafficDataDimensions
+from .enums import City
 
 
 class Calendar:
