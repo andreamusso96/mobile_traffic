@@ -18,7 +18,7 @@ class MobileTrafficDataset:
         for city, data in self.data.items():
             time_as_str = [str(t) for t in data.time.values]
             data_ = data.assign_coords(time=time_as_str)
-            data_.to_netcdf(f'{folder_path}/mobile_traffic_{city.value.lower()}_by_tile_service_and_time.nc')
+            data_.to_netcdf(f'{folder_path}/mobile_traffic_{city.value}_by_tile_service_and_time.nc')
 
     def load(self, folder_path: str, city: List[City] = None):
         city = city if city is not None else [c for c in City]
