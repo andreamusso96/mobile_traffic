@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List
+from typing import List, Tuple
 import logging
 
 import pandas as pd
@@ -51,3 +51,33 @@ class Anomalies:
         anomaly_dates = [date(2019, 4, 9), date(2019, 4, 12), date(2019, 4, 14), date(2019, 5, 12),
                          date(2019, 5, 22), date(2019, 5, 23), date(2019, 5, 24), date(2019, 5, 25)]
         return anomaly_dates
+
+class CityDimensions:
+    city_dims = {
+        'Bordeaux': (334, 342),
+        'Clermont-Ferrand': (208, 268),
+        'Dijon': (195, 234),
+        'France': (9742, 9588),
+        'Grenoble': (409, 251),
+        'Lille': (330, 342),
+        'Lyon': (426, 287),
+        'Mans': (228, 246),
+        'Marseille': (211, 210),
+        'Metz': (226, 269),
+        'Montpellier': (334, 327),
+        'Nancy': (151, 165),
+        'Nantes': (277, 425),
+        'Nice': (150, 214),
+        'Orleans': (282, 256),
+        'Paris': (409, 346),
+        'Rennes': (423, 370),
+        'Saint-Etienne': (305, 501),
+        'Strasbourg': (296, 258),
+        'Toulouse': (280, 347),
+        'Tours': (251, 270)
+    }
+
+    @classmethod
+    def get_city_dim(cls, city) -> Tuple[int, int]:
+        city_name = city.value  # Get the city name from the Enum member
+        return cls.city_dims.get(city_name)

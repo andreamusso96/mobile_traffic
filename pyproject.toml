@@ -7,3 +7,5 @@ name = "mobile_traffic"
 version = "0.1.0"
 authors = [{name = "Andrea Musso"}]
 requires-python = ">=3.7"
+dynamic = ["dependencies"]
+dependencies = {file = ["requirements.txt"]}
