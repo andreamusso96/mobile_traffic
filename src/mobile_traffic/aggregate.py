@@ -20,10 +20,6 @@ class MobileTrafficDataset:
             data_ = data.assign_coords(time=time_as_str)
             data_.to_netcdf(f'{folder_path}/mobile_traffic_{city.value.lower()}_by_tile_service_and_time.nc')
 
-    def load(self, folder_path: str, city: List[City] = None):
-        city = city if city is not None else [c for c in City]
-        self.data = {c: xr.open_dataset(f'{folder_path}/{c.value}.nc').to_array().squeeze() for c in city}
-
 
 def day_time_to_datetime_index(xar: xr.DataArray) -> xr.DataArray:
     new_index = np.add.outer(xar.indexes[TrafficDataDimensions.DAY.value], xar.indexes[TrafficDataDimensions.TIME.value]).flatten()
@@ -50,7 +46,24 @@ def get_night_traffic_city_by_tile_service_time(city: City, traffic_type: Traffi
 
         traffic_data_service = remove_times_outside_range(traffic_data=traffic_data_service, start=start_night, end=end_night)
         traffic_data_service = traffic_data_service.groupby(group=f'{TrafficDataDimensions.DATETIME.value}.time').sum()
+        sorted_time_index = _sort_time_index(time_index=traffic_data_service.time.values, reference_time=start_night)
+        traffic_data_service = traffic_data_service.reindex({TrafficDataDimensions.TIME.value: sorted_time_index})
         traffic_data_city.append(traffic_data_service)
 
     traffic_data_city = xr.concat(traffic_data_city, dim=TrafficDataDimensions.SERVICE.value)
     return traffic_data_city
+
+
+def _sort_time_index(time_index: List[time], reference_time: time):
+    auxiliary_day = datetime(2020, 2, 1)
+    auxiliary_dates = []
+
+    for t in time_index:
+        if t < reference_time:
+            auxiliary_dates.append(datetime.combine(date=auxiliary_day + timedelta(days=1), time=t))
+        else:
+            auxiliary_dates.append(datetime.combine(date=auxiliary_day, time=t))
+
+    auxiliary_dates.sort()
+    sorted_times = [d.time() for d in auxiliary_dates]
+    return sorted_times
